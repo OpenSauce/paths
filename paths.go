@@ -425,6 +425,17 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 
 	}
 
+	var heuristic func(start, dest *Cell) float64
+	if diagonals {
+		heuristic = func(start, dest *Cell) float64 {
+			return DiaganalDistance(start, dest)
+		}
+	} else {
+		heuristic = func(start, dest *Cell) float64 {
+			return ManhattenDistance(start, dest)
+		}
+	}
+
 	costSoFar[dest] = 0
 	path := &Path{}
 
@@ -465,7 +476,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 			if c.Walkable && (!hasBeenAdded(c) || newCost < costSoFar[c]) {
 				n := &Node{c, current, newCost}
 				costSoFar[n.Cell] = newCost
-				priority := newCost + float64(DiaganalDistance(current.Cell, n.Cell))
+				priority := newCost + heuristic(current.Cell, n.Cell)
 				n.Cost = priority
 				heap.Push(&openNodes, n)
 			}
@@ -477,7 +488,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 			n := &Node{c, current, newCost}
 			if n.Cell.Walkable && (!hasBeenAdded(n.Cell) || newCost < costSoFar[n.Cell]) {
 				costSoFar[n.Cell] = newCost
-				priority := newCost + float64(DiaganalDistance(current.Cell, n.Cell))
+				priority := newCost + heuristic(current.Cell, n.Cell)
 				n.Cost = priority
 				heap.Push(&openNodes, n)
 			}
@@ -489,7 +500,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 			n := &Node{c, current, newCost}
 			if n.Cell.Walkable && (!hasBeenAdded(n.Cell) || newCost < costSoFar[n.Cell]) {
 				costSoFar[n.Cell] = newCost
-				priority := newCost + float64(DiaganalDistance(current.Cell, n.Cell))
+				priority := newCost + heuristic(current.Cell, n.Cell)
 				n.Cost = priority
 				heap.Push(&openNodes, n)
 			}
@@ -500,7 +511,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 			n := &Node{c, current, newCost}
 			if n.Cell.Walkable && (!hasBeenAdded(n.Cell) || newCost < costSoFar[n.Cell]) {
 				costSoFar[n.Cell] = newCost
-				priority := newCost + float64(DiaganalDistance(current.Cell, n.Cell))
+				priority := newCost + heuristic(current.Cell, n.Cell)
 				n.Cost = priority
 				heap.Push(&openNodes, n)
 			}
@@ -541,7 +552,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 				n := &Node{c, current, newCost}
 				if n.Cell.Walkable && (!hasBeenAdded(n.Cell) || newCost < costSoFar[n.Cell]) && (!wallsBlockDiagonals || (left && up)) {
 					costSoFar[n.Cell] = newCost
-					priority := newCost + float64(DiaganalDistance(current.Cell, n.Cell))
+					priority := newCost + heuristic(current.Cell, n.Cell)
 					n.Cost = priority
 					heap.Push(&openNodes, n)
 				}
@@ -553,7 +564,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 				n := &Node{c, current, newCost}
 				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (right && up)) {
 					costSoFar[n.Cell] = newCost
-					priority := newCost + float64(DiaganalDistance(current.Cell, n.Cell))
+					priority := newCost + heuristic(current.Cell, n.Cell)
 					n.Cost = priority
 					heap.Push(&openNodes, n)
 				}
@@ -565,7 +576,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 				n := &Node{c, current, newCost}
 				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (left && down)) {
 					costSoFar[n.Cell] = newCost
-					priority := newCost + float64(DiaganalDistance(current.Cell, n.Cell))
+					priority := newCost + heuristic(current.Cell, n.Cell)
 					n.Cost = priority
 					heap.Push(&openNodes, n)
 				}
@@ -577,7 +588,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 				n := &Node{c, current, newCost}
 				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (right && down)) {
 					costSoFar[n.Cell] = newCost
-					priority := newCost + float64(DiaganalDistance(current.Cell, n.Cell))
+					priority := newCost + heuristic(current.Cell, n.Cell)
 					n.Cost = priority
 					heap.Push(&openNodes, n)
 				}
@@ -775,6 +786,15 @@ func (p *Path) AtStart() bool {
 // AtEnd returns if the Path's current index is the last Cell in the Path.
 func (p *Path) AtEnd() bool {
 	return p.CurrentIndex >= len(p.Cells)-1
+}
+
+// AtEnd returns if the Path's current index is the last Cell in the Path.
+func (p *Path) String() string {
+	path := ""
+	for _, cell := range p.Cells {
+		path += fmt.Sprintf("[%d:%d]", cell.X, cell.Y) + "->"
+	}
+	return path
 }
 
 // Node represents the node a path, it contains the cell it represents.
