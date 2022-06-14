@@ -292,7 +292,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 		// checked (so we don't get nodes being checked multiple times).
 		if node.Cell.X > 0 {
 			c := m.Get(node.Cell.X-1, node.Cell.Y)
-			n := &Node{c, node, c.Cost + node.Cost}
+			n := &Node{c, node, c.Cost + node.Cost, 0, 0}
 			if n.Cell.Walkable && !hasBeenAdded(n.Cell) {
 				heap.Push(&openNodes, n)
 				checkedNodes[n.Cell] = struct{}{}
@@ -300,7 +300,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 		}
 		if node.Cell.X < m.Width()-1 {
 			c := m.Get(node.Cell.X+1, node.Cell.Y)
-			n := &Node{c, node, c.Cost + node.Cost}
+			n := &Node{c, node, c.Cost + node.Cost, 0, 0}
 			if n.Cell.Walkable && !hasBeenAdded(n.Cell) {
 				heap.Push(&openNodes, n)
 				checkedNodes[n.Cell] = struct{}{}
@@ -309,7 +309,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 
 		if node.Cell.Y > 0 {
 			c := m.Get(node.Cell.X, node.Cell.Y-1)
-			n := &Node{c, node, c.Cost + node.Cost}
+			n := &Node{c, node, c.Cost + node.Cost, 0, 0}
 			if n.Cell.Walkable && !hasBeenAdded(n.Cell) {
 				heap.Push(&openNodes, n)
 				checkedNodes[n.Cell] = struct{}{}
@@ -317,7 +317,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 		}
 		if node.Cell.Y < m.Height()-1 {
 			c := m.Get(node.Cell.X, node.Cell.Y+1)
-			n := &Node{c, node, c.Cost + node.Cost}
+			n := &Node{c, node, c.Cost + node.Cost, 0, 0}
 			if n.Cell.Walkable && !hasBeenAdded(n.Cell) {
 				heap.Push(&openNodes, n)
 				checkedNodes[n.Cell] = struct{}{}
@@ -355,7 +355,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 
 			if node.Cell.X > 0 && node.Cell.Y > 0 {
 				c := m.Get(node.Cell.X-1, node.Cell.Y-1)
-				n := &Node{c, node, c.Cost + node.Cost + diagonalCost}
+				n := &Node{c, node, c.Cost + node.Cost + diagonalCost, 0, 0}
 				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (left && up)) {
 					heap.Push(&openNodes, n)
 					checkedNodes[n.Cell] = struct{}{}
@@ -364,7 +364,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 
 			if node.Cell.X < m.Width()-1 && node.Cell.Y > 0 {
 				c := m.Get(node.Cell.X+1, node.Cell.Y-1)
-				n := &Node{c, node, c.Cost + node.Cost + diagonalCost}
+				n := &Node{c, node, c.Cost + node.Cost + diagonalCost, 0, 0}
 				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (right && up)) {
 					heap.Push(&openNodes, n)
 					checkedNodes[n.Cell] = struct{}{}
@@ -373,7 +373,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 
 			if node.Cell.X > 0 && node.Cell.Y < m.Height()-1 {
 				c := m.Get(node.Cell.X-1, node.Cell.Y+1)
-				n := &Node{c, node, c.Cost + node.Cost + diagonalCost}
+				n := &Node{c, node, c.Cost + node.Cost + diagonalCost, 0, 0}
 				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (left && down)) {
 					heap.Push(&openNodes, n)
 					checkedNodes[n.Cell] = struct{}{}
@@ -382,7 +382,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 
 			if node.Cell.X < m.Width()-1 && node.Cell.Y < m.Height()-1 {
 				c := m.Get(node.Cell.X+1, node.Cell.Y+1)
-				n := &Node{c, node, c.Cost + node.Cost + diagonalCost}
+				n := &Node{c, node, c.Cost + node.Cost + diagonalCost, 0, 0}
 				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (right && down)) {
 					heap.Push(&openNodes, n)
 					checkedNodes[n.Cell] = struct{}{}
@@ -419,10 +419,8 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 
 	costSoFar := map[*Cell]float64{}
 	hasBeenAdded := func(cell *Cell) bool {
-
 		_, ok := costSoFar[cell]
 		return ok
-
 	}
 
 	var heuristic func(start, dest *Cell) float64
@@ -443,12 +441,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 		return nil
 	}
 
-	for {
-
-		// If the list of openNodes (nodes to check) is at 0, then we've checked all Nodes, and so the function can quit.
-		if len(openNodes) == 0 {
-			break
-		}
+	for len(openNodes) > 0 {
 
 		current := heap.Pop(&openNodes).(*Node)
 
@@ -472,47 +465,53 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 		// checked (so we don't get nodes being checked multiple times).
 		if current.Cell.X > 0 {
 			c := m.Get(current.Cell.X-1, current.Cell.Y)
-			newCost := costSoFar[current.Cell] + c.Cost
-			if c.Walkable && (!hasBeenAdded(c) || newCost < costSoFar[c]) {
-				n := &Node{c, current, newCost}
-				costSoFar[n.Cell] = newCost
-				priority := newCost + heuristic(current.Cell, n.Cell)
-				n.Cost = priority
+
+			n := &Node{c, current, 0, 0, 0}
+			n.g = current.g + c.Cost
+			if c.Walkable && !hasBeenAdded(c) || n.g < costSoFar[c] {
+				n.h = heuristic(current.Cell, n.Cell)
+				n.Cost = n.g + n.h
+				costSoFar[c] = n.g
 				heap.Push(&openNodes, n)
 			}
+
 		}
 
 		if current.Cell.X < m.Width()-1 {
 			c := m.Get(current.Cell.X+1, current.Cell.Y)
-			newCost := costSoFar[current.Cell] + c.Cost
-			n := &Node{c, current, newCost}
-			if n.Cell.Walkable && (!hasBeenAdded(n.Cell) || newCost < costSoFar[n.Cell]) {
-				costSoFar[n.Cell] = newCost
-				priority := newCost + heuristic(current.Cell, n.Cell)
-				n.Cost = priority
+
+			n := &Node{c, current, 0, 0, 0}
+			n.g = current.g + c.Cost
+			if c.Walkable && !hasBeenAdded(c) || n.g < costSoFar[c] {
+				n.h = heuristic(current.Cell, n.Cell)
+				n.Cost = n.g + n.h
+				costSoFar[c] = n.g
 				heap.Push(&openNodes, n)
 			}
 		}
 
 		if current.Cell.Y > 0 {
 			c := m.Get(current.Cell.X, current.Cell.Y-1)
-			newCost := costSoFar[current.Cell] + c.Cost
-			n := &Node{c, current, newCost}
-			if n.Cell.Walkable && (!hasBeenAdded(n.Cell) || newCost < costSoFar[n.Cell]) {
-				costSoFar[n.Cell] = newCost
-				priority := newCost + heuristic(current.Cell, n.Cell)
-				n.Cost = priority
+
+			n := &Node{c, current, 0, 0, 0}
+			n.g = current.g + c.Cost
+			if c.Walkable && !hasBeenAdded(c) || n.g < costSoFar[c] {
+				n.h = heuristic(current.Cell, n.Cell)
+				n.Cost = n.g + n.h
+				costSoFar[c] = n.g
 				heap.Push(&openNodes, n)
 			}
 		}
+
 		if current.Cell.Y < m.Height()-1 {
 			c := m.Get(current.Cell.X, current.Cell.Y+1)
-			newCost := costSoFar[current.Cell] + c.Cost
-			n := &Node{c, current, newCost}
-			if n.Cell.Walkable && (!hasBeenAdded(n.Cell) || newCost < costSoFar[n.Cell]) {
-				costSoFar[n.Cell] = newCost
-				priority := newCost + heuristic(current.Cell, n.Cell)
-				n.Cost = priority
+
+			n := &Node{c, current, 0, 0, 0}
+			n.g = current.g + c.Cost
+			if c.Walkable && !hasBeenAdded(c) || n.g < costSoFar[c] {
+				n.h = heuristic(current.Cell, n.Cell)
+				n.Cost = n.g + n.h
+				costSoFar[c] = n.g
 				heap.Push(&openNodes, n)
 			}
 		}
@@ -548,48 +547,53 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 
 			if current.Cell.X > 0 && current.Cell.Y > 0 {
 				c := m.Get(current.Cell.X-1, current.Cell.Y-1)
-				newCost := costSoFar[current.Cell] + c.Cost + diagonalCost
-				n := &Node{c, current, newCost}
-				if n.Cell.Walkable && (!hasBeenAdded(n.Cell) || newCost < costSoFar[n.Cell]) && (!wallsBlockDiagonals || (left && up)) {
-					costSoFar[n.Cell] = newCost
-					priority := newCost + heuristic(current.Cell, n.Cell)
-					n.Cost = priority
+
+				n := &Node{c, current, 0, 0, 0}
+				n.g = current.g + c.Cost + diagonalCost
+				if !hasBeenAdded(c) || n.g < costSoFar[c] && (!wallsBlockDiagonals || (left && up)) {
+					n.h = heuristic(current.Cell, n.Cell)
+					n.Cost = n.g + n.h
+					costSoFar[c] = n.g
 					heap.Push(&openNodes, n)
 				}
+
 			}
 
 			if current.Cell.X < m.Width()-1 && current.Cell.Y > 0 {
 				c := m.Get(current.Cell.X+1, current.Cell.Y-1)
-				newCost := costSoFar[current.Cell] + c.Cost + diagonalCost
-				n := &Node{c, current, newCost}
-				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (right && up)) {
-					costSoFar[n.Cell] = newCost
-					priority := newCost + heuristic(current.Cell, n.Cell)
-					n.Cost = priority
+
+				n := &Node{c, current, 0, 0, 0}
+				n.g = current.g + c.Cost + diagonalCost
+				if !hasBeenAdded(c) || n.g < costSoFar[c] && (!wallsBlockDiagonals || (right && up)) {
+					n.h = heuristic(current.Cell, n.Cell)
+					n.Cost = n.g + n.h
+					costSoFar[c] = n.g
 					heap.Push(&openNodes, n)
 				}
 			}
 
 			if current.Cell.X > 0 && current.Cell.Y < m.Height()-1 {
 				c := m.Get(current.Cell.X-1, current.Cell.Y+1)
-				newCost := costSoFar[current.Cell] + c.Cost + diagonalCost
-				n := &Node{c, current, newCost}
-				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (left && down)) {
-					costSoFar[n.Cell] = newCost
-					priority := newCost + heuristic(current.Cell, n.Cell)
-					n.Cost = priority
+
+				n := &Node{c, current, 0, 0, 0}
+				n.g = current.g + c.Cost + diagonalCost
+				if !hasBeenAdded(c) || n.g < costSoFar[c] && (!wallsBlockDiagonals || (left && down)) {
+					n.h = heuristic(current.Cell, n.Cell)
+					n.Cost = n.g + n.h
+					costSoFar[c] = n.g
 					heap.Push(&openNodes, n)
 				}
 			}
 
 			if current.Cell.X < m.Width()-1 && current.Cell.Y < m.Height()-1 {
 				c := m.Get(current.Cell.X+1, current.Cell.Y+1)
-				newCost := costSoFar[current.Cell] + c.Cost + diagonalCost
-				n := &Node{c, current, newCost}
-				if n.Cell.Walkable && !hasBeenAdded(n.Cell) && (!wallsBlockDiagonals || (right && down)) {
-					costSoFar[n.Cell] = newCost
-					priority := newCost + heuristic(current.Cell, n.Cell)
-					n.Cost = priority
+
+				n := &Node{c, current, 0, 0, 0}
+				n.g = current.g + c.Cost + diagonalCost
+				if !hasBeenAdded(c) || n.g < costSoFar[c] && (!wallsBlockDiagonals || (right && down)) {
+					n.h = heuristic(current.Cell, n.Cell)
+					n.Cost = n.g + n.h
+					costSoFar[c] = n.g
 					heap.Push(&openNodes, n)
 				}
 			}
@@ -803,6 +807,8 @@ type Node struct {
 	Cell   *Cell
 	Parent *Node
 	Cost   float64
+	g      float64
+	h      float64
 }
 
 type minHeap []*Node
