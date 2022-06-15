@@ -397,16 +397,18 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 
 }
 
+// ManhattenDistance heuristic for a simple four directional movement.
 func ManhattenDistance(start, dest *Cell) float64 {
 	dx := math.Abs(float64(start.X - dest.X))
 	dy := math.Abs(float64(start.Y - dest.Y))
 	return 1 * (dx + dy)
 }
 
+// DiaganolDistance heuristic for when diaganol movement is allowed.
 func DiaganalDistance(start, dest *Cell) float64 {
 	dx := math.Abs(float64(start.X - dest.X))
 	dy := math.Abs(float64(start.Y - dest.Y))
-	return 1*(dx+dy) + (.414-2*1)*math.Min(dx, dy)
+	return 1*(dx+dy) + (1.414-2*1)*math.Min(dx, dy)
 }
 
 // GetPathFromCellsAStar returns a Path, from the starting Cell to the destination Cell. diagonals controls whether moving diagonally
@@ -426,11 +428,11 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 	var heuristic func(start, dest *Cell) float64
 	if diagonals {
 		heuristic = func(start, dest *Cell) float64 {
-			return DiaganalDistance(start, dest)
+			return DiaganalDistance(dest, start)
 		}
 	} else {
 		heuristic = func(start, dest *Cell) float64 {
-			return ManhattenDistance(start, dest)
+			return ManhattenDistance(dest, start)
 		}
 	}
 
@@ -469,7 +471,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 			n := &Node{c, current, 0, 0, 0}
 			n.g = current.g + c.Cost
 			if c.Walkable && !hasBeenAdded(c) || n.g < costSoFar[c] {
-				n.h = heuristic(current.Cell, n.Cell)
+				n.h = heuristic(n.Cell, start)
 				n.Cost = n.g + n.h
 				costSoFar[c] = n.g
 				heap.Push(&openNodes, n)
@@ -483,7 +485,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 			n := &Node{c, current, 0, 0, 0}
 			n.g = current.g + c.Cost
 			if c.Walkable && !hasBeenAdded(c) || n.g < costSoFar[c] {
-				n.h = heuristic(current.Cell, n.Cell)
+				n.h = heuristic(n.Cell, start)
 				n.Cost = n.g + n.h
 				costSoFar[c] = n.g
 				heap.Push(&openNodes, n)
@@ -496,7 +498,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 			n := &Node{c, current, 0, 0, 0}
 			n.g = current.g + c.Cost
 			if c.Walkable && !hasBeenAdded(c) || n.g < costSoFar[c] {
-				n.h = heuristic(current.Cell, n.Cell)
+				n.h = heuristic(n.Cell, start)
 				n.Cost = n.g + n.h
 				costSoFar[c] = n.g
 				heap.Push(&openNodes, n)
@@ -509,7 +511,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 			n := &Node{c, current, 0, 0, 0}
 			n.g = current.g + c.Cost
 			if c.Walkable && !hasBeenAdded(c) || n.g < costSoFar[c] {
-				n.h = heuristic(current.Cell, n.Cell)
+				n.h = heuristic(n.Cell, start)
 				n.Cost = n.g + n.h
 				costSoFar[c] = n.g
 				heap.Push(&openNodes, n)
@@ -551,7 +553,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 				n := &Node{c, current, 0, 0, 0}
 				n.g = current.g + c.Cost + diagonalCost
 				if !hasBeenAdded(c) || n.g < costSoFar[c] && (!wallsBlockDiagonals || (left && up)) {
-					n.h = heuristic(current.Cell, n.Cell)
+					n.h = heuristic(n.Cell, start)
 					n.Cost = n.g + n.h
 					costSoFar[c] = n.g
 					heap.Push(&openNodes, n)
@@ -565,7 +567,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 				n := &Node{c, current, 0, 0, 0}
 				n.g = current.g + c.Cost + diagonalCost
 				if !hasBeenAdded(c) || n.g < costSoFar[c] && (!wallsBlockDiagonals || (right && up)) {
-					n.h = heuristic(current.Cell, n.Cell)
+					n.h = heuristic(n.Cell, start)
 					n.Cost = n.g + n.h
 					costSoFar[c] = n.g
 					heap.Push(&openNodes, n)
@@ -578,7 +580,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 				n := &Node{c, current, 0, 0, 0}
 				n.g = current.g + c.Cost + diagonalCost
 				if !hasBeenAdded(c) || n.g < costSoFar[c] && (!wallsBlockDiagonals || (left && down)) {
-					n.h = heuristic(current.Cell, n.Cell)
+					n.h = heuristic(n.Cell, start)
 					n.Cost = n.g + n.h
 					costSoFar[c] = n.g
 					heap.Push(&openNodes, n)
@@ -591,7 +593,7 @@ func (m *Grid) GetPathFromCellsAStar(start, dest *Cell, diagonals, wallsBlockDia
 				n := &Node{c, current, 0, 0, 0}
 				n.g = current.g + c.Cost + diagonalCost
 				if !hasBeenAdded(c) || n.g < costSoFar[c] && (!wallsBlockDiagonals || (right && down)) {
-					n.h = heuristic(current.Cell, n.Cell)
+					n.h = heuristic(n.Cell, start)
 					n.Cost = n.g + n.h
 					costSoFar[c] = n.g
 					heap.Push(&openNodes, n)

@@ -9,14 +9,14 @@ var p *Path
 func BenchmarkGetPathFromCells(b *testing.B) {
 	firstMap := NewGrid(200, 200, 16, 16)
 	for i := 0; i < b.N; i++ {
-		p = firstMap.GetPathFromCells(firstMap.Get(50, 50), firstMap.Get(199, 199), true, true)
+		p = firstMap.GetPathFromCells(firstMap.Get(0, 0), firstMap.Get(0, 199), true, true)
 	}
 }
 
 func BenchmarkGetPathFromCellsA(b *testing.B) {
 	firstMap := NewGrid(200, 200, 16, 16)
 	for i := 0; i < b.N; i++ {
-		p = firstMap.GetPathFromCellsAStar(firstMap.Get(50, 50), firstMap.Get(199, 199), true, true)
+		p = firstMap.GetPathFromCellsAStar(firstMap.Get(0, 0), firstMap.Get(0, 199), true, true)
 	}
 }
 
