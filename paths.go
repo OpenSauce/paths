@@ -277,7 +277,7 @@ func (m *Grid) GetPathFromCells(start, dest *Cell, diagonals, wallsBlockDiagonal
 		if node.Cell == start {
 
 			var t = node
-			for true {
+			for {
 				path.Cells = append(path.Cells, t.Cell)
 				t = t.Parent
 				if t == nil {
