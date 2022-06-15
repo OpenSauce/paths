@@ -619,7 +619,7 @@ func (m *Grid) GetPath(startX, startY, endX, endY float64, diagonals bool, walls
 	ec := m.Get(ex, ey)
 
 	if sc != nil && ec != nil {
-		return m.GetPathFromCells(sc, ec, diagonals, wallsBlockDiagonals)
+		return m.GetPathFromCellsAStar(sc, ec, diagonals, wallsBlockDiagonals)
 	}
 	return nil
 }
