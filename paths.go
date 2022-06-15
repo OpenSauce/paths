@@ -404,7 +404,7 @@ func ManhattenDistance(start, dest *Cell) float64 {
 	return 1 * (dx + dy)
 }
 
-// DiaganolDistance heuristic for when diaganol movement is allowed.
+// DiaganalDistance heuristic for when diaganol movement is allowed.
 func DiaganalDistance(start, dest *Cell) float64 {
 	dx := math.Abs(float64(start.X - dest.X))
 	dy := math.Abs(float64(start.Y - dest.Y))
